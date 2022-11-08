@@ -1,40 +1,18 @@
 # app.py
+from flask_restx import Resource, Api
 
-from flask import Flask, request
-from flask_restx import Api, Resource
-from flask_sqlalchemy import SQLAlchemy
-from marshmallow import Schema, fields
+from config import app
+from models import Movie, MovieSchema
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+api = Api(app)
+movie_ns = api.namespace('movies')
+movies_schema = MovieSchema(many=True)
 
-
-class Movie(db.Model):
-    __tablename__ = 'movie'
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(255))
-    description = db.Column(db.String(255))
-    trailer = db.Column(db.String(255))
-    year = db.Column(db.Integer)
-    rating = db.Column(db.Float)
-    genre_id = db.Column(db.Integer, db.ForeignKey("genre.id"))
-    genre = db.relationship("Genre")
-    director_id = db.Column(db.Integer, db.ForeignKey("director.id"))
-    director = db.relationship("Director")
-
-class Director(db.Model):
-    __tablename__ = 'director'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255))
-
-
-class Genre(db.Model):
-    __tablename__ = 'genre'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255))
-
+@movie_ns.route('/', methods=['GET', 'POST'])
+class MoviesViews(Resource):
+    def get(self):
+        result = movies_schema.dump(Movie.query.all())
+        return result
 
 
 if __name__ == '__main__':
